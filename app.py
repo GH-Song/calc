@@ -115,7 +115,7 @@ with col_view:
                   delta=f"Diff: {sasm_res['Valid_FOV_mm'] - det_width_m*1e3:.1f} mm",
                   delta_color="inverse")
     with m4:
-        st.metric("Algo Pitch (Out)", f"{sasm_res['new_px_um']:.2f} um")
+        st.metric("Pixel pitch (Out)", f"{sasm_res['new_px_um']:.2f} um")
 
     st.divider()
 
@@ -155,3 +155,4 @@ with col_view:
     
     # [핵심 3] use_container_width=True 로 설정하여 컬럼 너비에 꽉 차게 그림
     st.pyplot(fig, use_container_width=True)
+
