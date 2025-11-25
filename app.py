@@ -4,7 +4,7 @@ from scipy.optimize import brentq
 import streamlit as st
 
 # -----------------------------------------------------------------------------
-# 1. Core Logic (계산 로직)
+# 1. Core Logic
 # -----------------------------------------------------------------------------
 @st.cache_data
 def calculate_sasm_metrics(z_mm, wl_nm, px_src_um, W, BLfactor=0.5):
@@ -48,25 +48,34 @@ def calculate_sasm_metrics(z_mm, wl_nm, px_src_um, W, BLfactor=0.5):
     }
 
 # -----------------------------------------------------------------------------
-# 2. UI Layout (Wide Dashboard)
+# 2. UI Layout
 # -----------------------------------------------------------------------------
 st.set_page_config(layout="wide", page_title="Optics Analyzer", page_icon="🔬")
 
+# 스타일링: Metric 라벨 크기 조정 및 여백 최소화
+st.markdown("""
+<style>
+    div[data-testid="stMetricValue"] { font-size: 1.2rem; }
+    div[data-testid="stMetricLabel"] { font-size: 0.8rem; color: #666; }
+    .report-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: #f9f9f9; }
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("### 🔬 Integrated Optical Analyzer")
 
-# [핵심] 화면을 3분할: [조작부(1)] : [텍스트 리포트(1)] : [그래프(2.2)]
-col_ctrl, col_text, col_plot = st.columns([1, 1, 2.2], gap="medium")
+# 비율 조정: [조작부(1)] : [대시보드(1.3)] : [그래프(1.7)]
+col_ctrl, col_dash, col_plot = st.columns([1, 1.3, 1.7], gap="medium")
 
 # =========================================================
-# COLUMN 1: 조작 패널 (Controls)
+# COLUMN 1: Inputs
 # =========================================================
 with col_ctrl:
-    st.info("🎛️ **Control Panel**")
+    st.info("🎛️ **Settings**")
     
     with st.expander("1. Detector Spec", expanded=True):
         w_wav = st.number_input("Wavelength (nm)", 400.0, 1000.0, 532.0, 10.0)
         w_px_det = st.number_input("Det. Pitch (um)", 1.0, 20.0, 3.76, 0.01, format="%.2f")
-        w_n = st.number_input("Refractive Index (n)", 1.0, 3.0, 1.0, 0.1)
+        w_n = st.number_input("Refractive Index", 1.0, 3.0, 1.0, 0.1)
         w_samp = st.slider("Sampling Rate", 1.0, 10.0, 2.0, 0.1)
         w_angle = st.slider("Max Angle (°)", 5.0, 89.0, 20.0)
 
@@ -81,7 +90,7 @@ with col_ctrl:
         w_BL = st.slider("BL Factor", 0.1, 1.0, 0.5, 0.05)
 
 # =========================================================
-# Calculation (Backend)
+# Backend Calculation
 # =========================================================
 wav = w_wav * 1e-9
 px_det = w_px_det * 1e-6
@@ -101,58 +110,79 @@ z_mm = z_geo * 1e3
 det_width_m = np.tan(np.deg2rad(w_angle)) * z_geo * 2
 n_pixels_det = det_width_m / px_det if px_det > 0 else 0
 
-# Mode Analysis
 n_modes_det_1d = det_width_m / spk_size if spk_size > 0 else 0
 n_modes_in_1d = (ap_in / size_in) * 2 if size_in > 0 else 0
 ratio_1d = n_modes_det_1d / n_modes_in_1d if n_modes_in_1d > 0 else 0
 
-# SASM Prediction
 sasm_res = calculate_sasm_metrics(z_mm, w_wav, w_px_src, w_W, w_BL)
 
 # =========================================================
-# COLUMN 2: 텍스트 리포트 (Text Report) - 복구됨
+# COLUMN 2: Dashboard (Visualized Text Report)
 # =========================================================
-with col_text:
-    st.success("📝 **Detailed Report**")
+with col_dash:
+    st.success("📊 **Analysis Dashboard**")
+
+    # 1. Input Summary (Compact)
+    with st.container():
+        st.caption("🔹 **Input Summary**")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("λ (nm)", f"{w_wav:.0f}")
+        c2.metric("Px Det", f"{w_px_det}um")
+        c3.metric("Ap Out", f"{w_ap_out}mm")
+        c4.metric("Ap In", f"{w_ap_in}mm")
     
-    # 예전 스타일의 텍스트 리포트 생성
-    report_str = f"""
-----------------------------------------
-INPUT SUMMARY (SI Units)
-----------------------------------------
-λ={w_wav:.1f}nm, Px(Det)={w_px_det:.2f}um
-Ap(Out)={w_ap_out:.3f}mm, Ap(in)={w_ap_in:.3f}mm
-----------------------------------------
-GEOMETRY & SPECKLE
-----------------------------------------
-Spk Size   : {spk_size*1e6:.2f} um
-Spk NA     : {spk_NA:.4f}
-Dist(Z)    : {z_mm:.2f} mm
-Det Width  : {det_width_m*1e3:.2f} mm
-Px on Det  : {int(n_pixels_det):,} px
-----------------------------------------
-[1D] MODE ANALYSIS (Linear)
-----------------------------------------
-In Modes   : {n_modes_in_1d:.4f}
-Det Modes  : {n_modes_det_1d:.4f}
-Ratio      : {ratio_1d:.4f}
-----------------------------------------
-SASM PREDICTION
-----------------------------------------
-Abs Sfov   : {sasm_res['Sfov_mm']:.2f} mm
-Valid FOV  : {sasm_res['Valid_FOV_mm']:.2f} mm
-Val Ratio  : {sasm_res['Ratio']:.1f} %
-Out Pitch  : {sasm_res['new_px_um']:.2f} um
-Max Angle  : {sasm_res['theta_deg']:.2f}°
-"""
-    # Monospace 폰트로 출력하여 줄맞춤 유지
-    st.code(report_str, language="text")
+    st.divider()
+
+    # 2. Geometry & Speckle
+    with st.container():
+        st.caption("🔹 **Geometry & Speckle**")
+        # Grid Layout
+        r1_c1, r1_c2, r1_c3 = st.columns(3)
+        r1_c1.metric("Prop. Dist (Z)", f"{z_mm:.2f} mm")
+        r1_c2.metric("Speckle Size", f"{spk_size*1e6:.2f} um")
+        r1_c3.metric("Speckle NA", f"{spk_NA:.4f}")
+        
+        r2_c1, r2_c2, r2_c3 = st.columns(3)
+        r2_c1.metric("Det Width", f"{det_width_m*1e3:.2f} mm")
+        r2_c2.metric("Pixels on Det", f"{int(n_pixels_det):,}")
+        r2_c3.metric("Max Angle", f"{w_angle}°")
+
+    st.divider()
+
+    # 3. Mode Analysis
+    with st.container():
+        st.caption("🔹 **Mode Analysis (Linear)**")
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Input Modes", f"{n_modes_in_1d:.1f}")
+        m2.metric("Det. Modes", f"{n_modes_det_1d:.1f}")
+        # Ratio가 1보다 작으면 빨간색, 크면 기본색
+        m3.metric("Mode Ratio", f"{ratio_1d:.3f}", 
+                  delta="Lossy" if ratio_1d < 1 else "Sufficient",
+                  delta_color="normal" if ratio_1d >= 1 else "inverse")
+
+    st.divider()
+
+    # 4. SASM Prediction (Highlight)
+    with st.container():
+        st.caption("🔴 **SASM Algo. Prediction**")
+        s1, s2, s3 = st.columns(3)
+        s1.metric("Valid FOV", f"{sasm_res['Valid_FOV_mm']:.2f} mm",
+                  delta=f"{sasm_res['Ratio']:.1f}% eff.")
+        s2.metric("Max Algo Angle", f"{sasm_res['theta_deg']:.2f}°")
+        s3.metric("New Pitch", f"{sasm_res['new_px_um']:.2f} um")
+        
+        # FOV 비교
+        diff = sasm_res['Valid_FOV_mm'] - (det_width_m*1e3)
+        st.metric("Algo vs Physical FOV", 
+                  f"{sasm_res['Valid_FOV_mm']:.2f} vs {det_width_m*1e3:.2f} mm",
+                  delta=f"{diff:.2f} mm",
+                  delta_color="off")
 
 # =========================================================
-# COLUMN 3: 그래프 (Plot)
+# COLUMN 3: Plot
 # =========================================================
 with col_plot:
-    st.warning("📊 **Visualization**")
+    st.warning("📈 **Visualization**")
     
     z_range = np.linspace(1, 60, 100)
     sfov_line = []
@@ -166,30 +196,33 @@ with col_plot:
         dw = np.tan(np.deg2rad(w_angle)) * zz * 1e-3 * 2 * 1e3
         det_width_line.append(dw)
 
-    fig, ax = plt.subplots(figsize=(8, 5.5)) # 세로 길이를 조금 늘림
+    # 그래프 세로 길이를 늘려서 정보가 많아진 가운데 열과 균형 맞춤
+    fig, ax = plt.subplots(figsize=(8, 7.5)) 
     
     ax.plot(z_range, sfov_line, "k--", alpha=0.3, label="SASM Raw FOV")
     ax.plot(z_range, valid_line, "r-", linewidth=2.5, label="SASM Valid FOV")
     ax.plot(z_range, det_width_line, "g-.", linewidth=2, label="Physical Det. FOV")
     
-    # Points
     curr_valid = sasm_res['Valid_FOV_mm']
     curr_det = det_width_m * 1e3
     
     ax.axvline(z_mm, color="gray", linestyle=":", alpha=0.8)
     
-    # 텍스트와 점이 겹치지 않게 어노테이션 추가
-    ax.plot(z_mm, curr_valid, "r.", markersize=12, markeredgecolor="w", zorder=5)
-    ax.annotate(f"Algo\n{curr_valid:.1f}", (z_mm, curr_valid), xytext=(-20, 5), textcoords='offset points', color='r', fontweight='bold')
+    # Annotation
+    ax.plot(z_mm, curr_valid, "r.", markersize=14, markeredgecolor="w", zorder=5)
+    ax.annotate(f"Algo\n{curr_valid:.1f}", (z_mm, curr_valid), 
+                xytext=(-25, 5), textcoords='offset points', 
+                color='r', fontweight='bold', fontsize=10)
     
-    ax.plot(z_mm, curr_det, "g.", markersize=10, markeredgecolor="w", zorder=5)
-    ax.annotate(f"Det\n{curr_det:.1f}", (z_mm, curr_det), xytext=(10, -15), textcoords='offset points', color='g', fontweight='bold')
+    ax.plot(z_mm, curr_det, "g.", markersize=12, markeredgecolor="w", zorder=5)
+    ax.annotate(f"Det\n{curr_det:.1f}", (z_mm, curr_det), 
+                xytext=(10, -20), textcoords='offset points', 
+                color='g', fontweight='bold', fontsize=10)
 
-    ax.set_title(f"FOV Analysis (Z = {z_mm:.1f} mm)", fontsize=12, fontweight='bold')
-    ax.set_xlabel("Propagation Distance (mm)")
-    ax.set_ylabel("FOV (mm)")
-    ax.legend()
+    ax.set_title(f"FOV Analysis (Z = {z_mm:.1f} mm)", fontsize=14, fontweight='bold')
+    ax.set_xlabel("Propagation Distance (mm)", fontsize=11)
+    ax.set_ylabel("FOV (mm)", fontsize=11)
+    ax.legend(loc="upper left")
     ax.grid(True, alpha=0.3)
     
-    # 플롯 출력 (반응형)
     st.pyplot(fig, use_container_width=True)
