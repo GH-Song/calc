@@ -141,7 +141,7 @@ det_width_m = np.tan(np.deg2rad(w_angle)) * z_geo * 2
 n_pixels_det = det_width_m / px_det if px_det > 0 else 0
 
 n_modes_det_1d = det_width_m / spk_size if spk_size > 0 else 0
-n_modes_in_1d = (ap_in / size_in) * 2 if size_in > 0 else 0
+n_modes_in_1d = (ap_in / size_in) if size_in > 0 else 0
 ratio_1d = n_modes_det_1d / n_modes_in_1d if n_modes_in_1d > 0 else 0
 
 n_modes_det_2d = (det_width_m / spk_size)**2 if spk_size > 0 else 0
@@ -187,12 +187,12 @@ with col_dash:
     with st.container():
         st.caption("🔹 **Mode Analysis**")
         m1, m2, m3 = st.columns(3)
-        m1.metric("Input Modes(1d, complex)", f"{n_modes_in_1d:.1f}")
+        m1.metric("Input Modes(1d, intensity)", f"{n_modes_in_1d:.1f}")
         m2.metric("Det. Modes(1d, intensity)", f"{n_modes_det_1d:.1f}")
         # Ratio가 1보다 작으면 빨간색, 크면 기본색
-        m3.metric("Mode Ratio", f"{ratio_1d:.3f}", 
-                  delta="Lossy" if ratio_1d < 1 else "Sufficient",
-                  delta_color="normal" if ratio_1d >= 1 else "inverse")
+        # m3.metric("Mode Ratio", f"{ratio_1d:.3f}", 
+        #           delta="Lossy" if ratio_1d < 1 else "Sufficient",
+        #           delta_color="normal" if ratio_1d >= 1 else "inverse")
         
         d1, d2, d3 = st.columns(3)
         d1.metric("Input Modes(2d, complex)", f"{n_modes_in_2d:.1f}")
@@ -269,6 +269,7 @@ with col_plot:
     ax.grid(True, alpha=0.3)
     
     st.pyplot(fig, use_container_width=True)
+
 
 
 
