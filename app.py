@@ -187,16 +187,16 @@ with col_dash:
     with st.container():
         st.caption("🔹 **Mode Analysis**")
         m1, m2, m3 = st.columns(3)
-        m1.metric("Input Modes(1d, intensity)", f"{n_modes_in_1d:.1f}")
-        m2.metric("Det. Modes(1d, intensity)", f"{n_modes_det_1d:.1f}")
+        m1.metric("Input Modes(1d)", f"{n_modes_in_1d:.0f}")
+        m2.metric("Det. Modes(1d)", f"{n_modes_det_1d:.0f}")
         # Ratio가 1보다 작으면 빨간색, 크면 기본색
         # m3.metric("Mode Ratio", f"{ratio_1d:.3f}", 
         #           delta="Lossy" if ratio_1d < 1 else "Sufficient",
         #           delta_color="normal" if ratio_1d >= 1 else "inverse")
         
         d1, d2, d3 = st.columns(3)
-        d1.metric("Input Modes(2d, complex)", f"{n_modes_in_2d:.1f}")
-        d2.metric("Det. Modes(2d, intensity)", f"{n_modes_det_2d:.1f}")
+        d1.metric("Input Modes(2d, complex)", f"{n_modes_in_2d:.0f}")
+        d2.metric("Det. Modes(2d, intensity)", f"{n_modes_det_2d:.0f}")
         # Ratio가 1보다 작으면 빨간색, 크면 기본색
         d3.metric("Mode Ratio", f"{ratio_2d:.3f}", 
                   delta="Lossy" if ratio_2d < 1 else "Sufficient",
@@ -269,6 +269,7 @@ with col_plot:
     ax.grid(True, alpha=0.3)
     
     st.pyplot(fig, use_container_width=True)
+
 
 
 
