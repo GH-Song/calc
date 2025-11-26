@@ -144,6 +144,10 @@ n_modes_det_1d = det_width_m / spk_size if spk_size > 0 else 0
 n_modes_in_1d = (ap_in / size_in) * 2 if size_in > 0 else 0
 ratio_1d = n_modes_det_1d / n_modes_in_1d if n_modes_in_1d > 0 else 0
 
+n_modes_det_2d = (det_width_m / spk_size)**2 if spk_size > 0 else 0
+n_modes_in_2d = (ap_in / size_in)**2 * 2 if size_in > 0 else 0
+ratio_2d = n_modes_det_2d / n_modes_in_2d if n_modes_in_2d > 0 else 0
+
 sasm_res = calculate_sasm_metrics(z_mm, w_wav, w_px_src, w_W, w_BL)
 
 # =========================================================
@@ -181,14 +185,23 @@ with col_dash:
 
     # 3. Mode Analysis
     with st.container():
-        st.caption("🔹 **Mode Analysis (Linear)**")
+        st.caption("🔹 **Mode Analysis**")
         m1, m2, m3 = st.columns(3)
-        m1.metric("Input Modes", f"{n_modes_in_1d:.1f}")
-        m2.metric("Det. Modes", f"{n_modes_det_1d:.1f}")
+        m1.metric("Input Modes(1d, complex)", f"{n_modes_in_1d:.1f}")
+        m2.metric("Det. Modes(1d, intensity)", f"{n_modes_det_1d:.1f}")
         # Ratio가 1보다 작으면 빨간색, 크면 기본색
         m3.metric("Mode Ratio", f"{ratio_1d:.3f}", 
                   delta="Lossy" if ratio_1d < 1 else "Sufficient",
                   delta_color="normal" if ratio_1d >= 1 else "inverse")
+        
+        d1, d2, d3 = st.columns(3)
+        d1.metric("Input Modes(2d, complex)", f"{n_modes_in_2d:.1f}")
+        d2.metric("Det. Modes(2d, intensity)", f"{n_modes_det_2d:.1f}")
+        # Ratio가 1보다 작으면 빨간색, 크면 기본색
+        d3.metric("Mode Ratio", f"{ratio_2d:.3f}", 
+                  delta="Lossy" if ratio_2d < 1 else "Sufficient",
+                  delta_color="normal" if ratio_2d >= 1 else "inverse")
+    
 
     st.divider()
 
@@ -256,5 +269,6 @@ with col_plot:
     ax.grid(True, alpha=0.3)
     
     st.pyplot(fig, use_container_width=True)
+
 
 
