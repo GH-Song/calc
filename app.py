@@ -67,28 +67,58 @@ st.markdown("### 🔬 Integrated Optical Analyzer")
 col_ctrl, col_dash, col_plot = st.columns([1, 1.3, 1.7], gap="medium")
 
 # =========================================================
-# COLUMN 1: Inputs
+# COLUMN 1: Inputs (Modified for Compactness)
 # =========================================================
 with col_ctrl:
     st.info("🎛️ **Settings**")
     
+    # 1. Detector Spec
     with st.expander("1. Detector Spec", expanded=True):
-        w_wav = st.number_input("Wavelength (nm)", 400.0, 1000.0, 532.0, 10.0)
-        w_px_det = st.number_input("Det. Pitch (um)", 1.0, 20.0, 3.76, 0.01, format="%.2f")
-        w_n = st.number_input("Refractive Index", 1.0, 3.0, 1.0, 0.1)
-        w_samp = st.slider("Sampling Rate", 1.0, 10.0, 2.0, 0.1)
-        w_angle = st.slider("Max Angle (°)", 5.0, 89.0, 20.0)
+        # 2열로 나누어 배치 (gap="small"로 더 밀착)
+        c1, c2 = st.columns(2, gap="small")
+        
+        with c1:
+            w_wav = st.number_input("λ (nm)", 400.0, 1000.0, 532.0, 10.0)
+            w_n = st.number_input("Ref. Index", 1.0, 3.0, 1.0, 0.1)
+        with c2:
+            w_px_det = st.number_input("Pitch (um)", 1.0, 20.0, 3.76, 0.01, format="%.2f")
+            # Sampling Rate는 Slider 대신 Number Input이 좁은 공간에 더 유리할 수 있으나,
+            # 슬라이더 유지를 위해 아래에 배치하거나 여기서 짧게 처리
+            pass 
 
+        # 슬라이더들은 조작 편의성을 위해 별도 행이나 꽉 찬 너비가 좋지만, 
+        # 컴팩트 요청에 맞춰 2열 혹은 짧은 라벨로 배치
+        c3, c4 = st.columns(2, gap="small")
+        with c3:
+            w_samp = st.slider("Sampling", 1.0, 10.0, 2.0, 0.1)
+        with c4:
+            w_angle = st.slider("Max Ang(°)", 5.0, 89.0, 20.0)
+
+    # 2. Geometry Spec
     with st.expander("2. Geometry Spec", expanded=True):
-        w_ap_out = st.number_input("Ap Out (mm)", 0.1, 50.0, 1.931, 0.1, format="%.3f")
-        w_ap_in = st.number_input("Ap In (mm)", 0.1, 50.0, 0.5, 0.1)
-        w_size_in = st.number_input("In Mode Size (nm)", 100.0, 5000.0, 350.0, 10.0)
+        c1, c2 = st.columns(2, gap="small")
+        with c1:
+            w_ap_out = st.number_input("Ap Out(mm)", 0.1, 50.0, 1.931, 0.1, format="%.3f")
+            w_size_in = st.number_input("Mode(nm)", 100.0, 5000.0, 350.0, 10.0)
+        with c2:
+            w_ap_in = st.number_input("Ap In(mm)", 0.1, 50.0, 0.5, 0.1)
+            # 빈 공간 채우기 용 (필요시 추가 위젯)
+            st.write("") 
 
+    # 3. SASM Algo
     with st.expander("3. SASM Algo", expanded=True):
-        w_px_src = st.number_input("Src Pitch (um)", 0.1, 5.0, 0.35, 0.01)
-        w_W = st.slider("Window (W)", 1000, 30000, 10000, 100)
-        w_BL = st.slider("BL Factor", 0.1, 1.0, 0.5, 0.05)
-
+        c1, c2 = st.columns(2, gap="small")
+        with c1:
+            w_px_src = st.number_input("Src Px(um)", 0.1, 5.0, 0.35, 0.01)
+            w_BL = st.slider("BL Factor", 0.1, 1.0, 0.5, 0.05)
+        with c2:
+            # Window 값은 크기 때문에 단독 조절이 편할 수 있으나 2열 배치 시도
+            w_W = st.number_input("Win (W)", 1000, 30000, 10000, 100) 
+            # (Slider는 공간을 많이 차지하므로 좁은 2열에서는 number_input으로 대체하는 것이 더 깔끔할 수 있음. 
+            # 여기선 위 코드의 slider를 number_input으로 교체하거나, slider를 유지하려면 아래처럼 배치)
+            
+    # Window Slider (Optional: 좁은 폭에서는 Slider 조작이 힘들 수 있어 아래로 뺌)
+    # w_W = st.slider("Window (W)", 1000, 30000, 10000, 100) # 위에서 number_input으로 대체함
 # =========================================================
 # Backend Calculation
 # =========================================================
@@ -226,4 +256,5 @@ with col_plot:
     ax.grid(True, alpha=0.3)
     
     st.pyplot(fig, use_container_width=True)
+
 
