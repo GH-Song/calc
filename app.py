@@ -197,7 +197,7 @@ with col_plot:
         det_width_line.append(dw)
 
     # 그래프 세로 길이를 늘려서 정보가 많아진 가운데 열과 균형 맞춤
-    fig, ax = plt.subplots(figsize=(8, 7.5)) 
+    fig, ax = plt.subplots(figsize=(7, 6)) 
     
     ax.plot(z_range, sfov_line, "k--", alpha=0.3, label="SASM Raw FOV")
     ax.plot(z_range, valid_line, "r-", linewidth=2.5, label="SASM Valid FOV")
@@ -226,3 +226,4 @@ with col_plot:
     ax.grid(True, alpha=0.3)
     
     st.pyplot(fig, use_container_width=True)
+
